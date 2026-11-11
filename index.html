@@ -184,7 +184,7 @@ h2{font-family:var(--serif);font-weight:300;font-size:clamp(34px,6vw,58px);line-
     <div class="cap">Avsluttende beskjed</div>
     <p class="lead" style="margin-top:26px">Vi er her for å ha en samtale, ikke for å starte borgerkrig i en gruppechat med 3 medlemmer.</p>
     <p class="ty">Takk for samarbeidet.</p>
-    <div class="stamps"><figure><img src="bilde1.png" alt="Bilde 1"><figcaption>11.11.2026</figcaption></figure><figure><img src="bilde2.jpeg" alt="Bilde 2" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='bilde2.jpg'}"><figcaption>11.11.2026</figcaption></figure></div>
+    <div class="stamps"><figure><img data-name="bilde1" alt="Bilde 1"><figcaption>11.11.2026</figcaption></figure><figure><img data-name="bilde2" alt="Bilde 2"><figcaption>11.11.2026</figcaption></figure></div>
     <div class="sig"><span>Vedtatt av alle</span><span>Versjon 1.0</span><span>Gjelder nå, men full effekt 2027</span></div>
   </section>
 </main>
@@ -233,15 +233,27 @@ function play(){if(!a.paused)return;seekStart();a.volume=0;
 a.addEventListener('ended',()=>{a.currentTime=START;a.play().catch(()=>{})});
 // if the browser ever pauses it, start again on the next tap/click/key
 ['pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,()=>{if(document.body.classList.contains('go')&&a.paused)play()}));
+// images: try common name/extension variants (phones and web hosts are case-sensitive)
+document.querySelectorAll('img[data-name]').forEach(img=>{
+  const n=img.dataset.name,N=n[0].toUpperCase()+n.slice(1);
+  const exts=['png','jpeg','jpg','PNG','JPEG','JPG','webp','WEBP'];
+  const c=[];[n,N,n.toUpperCase()].forEach(b=>exts.forEach(e=>c.push(b+'.'+e)));
+  let i=0;img.onerror=()=>{i++;if(i<c.length)img.src=c[i];else img.closest('figure').style.display='none'};
+  img.src=c[0];
+});
+// always start at the top
+if('scrollRestoration' in history)history.scrollRestoration='manual';
+const toTop=()=>{document.documentElement.scrollTop=0;document.body.scrollTop=0;window.scrollTo(0,0)};
+toTop();addEventListener('load',toTop);addEventListener('pageshow',toTop);
 // entering: light burst from the button, gate dissolves, then "Peace" writes itself
 const gate=document.getElementById('gate'),enter=document.getElementById('enter');
 enter.onclick=e=>{
   if(gate.classList.contains('opening'))return;
-  play();
+  play();toTop();
   const r=enter.getBoundingClientRect(),cx=e.clientX||r.left+r.width/2,cy=e.clientY||r.top+r.height/2;
   ['f','r','r r2'].forEach(k=>{const d=document.createElement('div');d.className='burst '+k;d.style.left=cx+'px';d.style.top=cy+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),2200)});
   gate.classList.add('opening');
-  setTimeout(()=>{gate.classList.add('gone');document.body.classList.remove('locked')},450);
+  setTimeout(()=>{toTop();gate.classList.add('gone');document.body.classList.remove('locked');toTop()},450);
   setTimeout(()=>{document.body.classList.add('go');writePeace()},700);
 };
 
